@@ -2,12 +2,8 @@
     "version": 2,
     "builds": [
         {
-            "src": "bookmyseat/wsgi.py",
-            "use": "@vercel/python",
-            "config": { 
-                "maxLambdaSize": "15mb",
-                "runtime": "python3.11"
-            }
+            "src": "index.py",
+            "use": "@vercel/python"
         }
     ],
     "routes": [
@@ -21,7 +17,10 @@
         },
         {
             "src": "/(.*)",
-            "dest": "bookmyseat/wsgi.py"
+            "dest": "index.py"
         }
-    ]
+    ],
+    "env": {
+        "PYTHON_VERSION": "3.11"
+    }
 }
