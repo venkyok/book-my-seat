@@ -1,0 +1,168 @@
+{% extends "users/basic.html" %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Movie Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <a href="{% url 'movie_list' %}" class="btn btn-outline-secondary mb-3">
+                <i class="fas fa-arrow-left"></i> Back to Movies
+            </a>
+        </div>
+    </div>
+
+    <!-- Movie Information Section -->
+    <div class="row">
+        <!-- Movie Poster -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow">
+                <img src="{{ movie.image.url }}" class="card-img-top" alt="{{ movie.name }}" style="height: 500px; object-fit: cover;">
+                <div class="card-body text-center">
+                    <h3 class="card-title">{{ movie.name }}</h3>
+                    <div class="mb-3">
+                        <span class="badge badge-primary badge-lg">{{ movie.get_genre_display }}</span>
+                        <span class="badge badge-info badge-lg">{{ movie.get_language_display }}</span>
+                    </div>
+                    <div class="rating mb-3">
+                        <h4>
+                            <i class="fas fa-star text-warning"></i> 
+                            <span class="text-dark">{{ movie.rating }}/10</span>
+                        </h4>
+                    </div>
+                    <a href="{% url 'theater_list' movie.id %}" class="btn btn-primary btn-lg btn-block">
+                        <i class="fas fa-ticket-alt"></i> Book Tickets
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Movie Details -->
+        <div class="col-md-8">
+            <!-- Movie Trailer -->
+            {% if movie.get_youtube_embed_url %}
+            <div class="card shadow mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0"><i class="fas fa-play-circle"></i> Watch Trailer</h4>
+                </div>
+                <div class="card-body p-0">
+                    <div class="embed-responsive embed-responsive-16by9">
+                        <iframe 
+                            class="embed-responsive-item" 
+                            src="{{ movie.get_youtube_embed_url }}" 
+                            allowfullscreen
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        ></iframe>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Movie Description -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-info-circle"></i> About the Movie</h4>
+                </div>
+                <div class="card-body">
+                    {% if movie.description %}
+                        <p class="lead">{{ movie.description }}</p>
+                    {% else %}
+                        <p class="text-muted">No description available.</p>
+                    {% endif %}
+                    
+                    <hr>
+                    
+                    <div class="movie-info">
+                        <h5><i class="fas fa-users"></i> Cast</h5>
+                        <p>{{ movie.cast }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Available Theaters -->
+            {% if theaters %}
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="fas fa-film"></i> Available Shows ({{ theaters.count }})</h4>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for theater in theaters %}
+                        <a href="{% url 'book_seats' theater.id %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-1">
+                                        <i class="fas fa-building"></i> {{ theater.name }}
+                                    </h5>
+                                    <p class="mb-0">
+                                        <i class="fas fa-clock"></i> 
+                                        {{ theater.time|date:"F d, Y - h:i A" }}
+                                    </p>
+                                </div>
+                                <div>
+                                    <span class="btn btn-primary">
+                                        Book Now <i class="fas fa-chevron-right"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="card shadow">
+                <div class="card-body text-center">
+                    <i class="fas fa-exclamation-circle fa-3x text-warning mb-3"></i>
+                    <h5>No Shows Available</h5>
+                    <p class="text-muted">There are currently no shows scheduled for this movie.</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Custom Styles -->
+<style>
+    .badge-lg {
+        font-size: 16px;
+        padding: 8px 15px;
+        margin: 5px;
+    }
+    
+    .card {
+        border: none;
+        transition: transform 0.3s ease-in-out;
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .list-group-item:hover {
+        background-color: #f8f9fa;
+        border-left: 4px solid #007bff;
+    }
+    
+    .embed-responsive {
+        border-radius: 0 0 8px 8px;
+    }
+    
+    .rating h4 {
+        margin: 0;
+    }
+    
+    .movie-info h5 {
+        color: #007bff;
+        margin-top: 15px;
+    }
+</style>
+
+<!-- Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+{% endblock %}

@@ -1,0 +1,267 @@
+{% extends "users/basic.html" %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- Payment Header -->
+            <div class="text-center mb-4">
+                <h2><i class="fas fa-credit-card"></i> Complete Your Payment</h2>
+                <p class="text-muted">Secure payment gateway powered by Razorpay</p>
+                
+                <!-- Reservation Timer Alert -->
+                <div class="alert alert-warning mt-3" id="timer-alert">
+                    <i class="fas fa-clock"></i> 
+                    <strong>Seats reserved for: <span id="countdown-timer">5:00</span></strong>
+                    <p class="mb-0 small">Complete payment before time expires</p>
+                </div>
+            </div>
+
+            <!-- Booking Summary -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-ticket-alt"></i> Booking Summary</h4>
+                </div>
+                <div class="card-body">
+                    {% for booking in bookings %}
+                    <div class="booking-item mb-3 p-3 border-bottom">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h5 class="mb-1">{{ booking.movie.name }}</h5>
+                                <p class="mb-1">
+                                    <i class="fas fa-building"></i> {{ booking.theater.name }}
+                                </p>
+                                <p class="mb-1">
+                                    <i class="fas fa-clock"></i> {{ booking.theater.time|date:"F d, Y - h:i A" }}
+                                </p>
+                                <p class="mb-0">
+                                    <i class="fas fa-chair"></i> Seat: <strong>{{ booking.seat.seat_number }}</strong>
+                                </p>
+                            </div>
+                            <div class="col-md-4 text-right">
+                                <h5 class="text-primary">₹{{ booking.amount }}</h5>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    
+                    <div class="row mt-3">
+                        <div class="col-md-8">
+                            <h5>Total Amount</h5>
+                        </div>
+                        <div class="col-md-4 text-right">
+                            <h4 class="text-success">₹{{ total_amount }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Methods -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="fas fa-wallet"></i> Select Payment Method</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Razorpay Payment Button -->
+                    <div class="payment-method mb-3">
+                        <button id="razorpay-button" class="btn btn-primary btn-lg btn-block">
+                            <i class="fas fa-credit-card"></i> Pay with Razorpay
+                        </button>
+                        <p class="text-center text-muted mt-2">
+                            <small>Supports Credit/Debit Cards, UPI, Net Banking, Wallets</small>
+                        </p>
+                    </div>
+
+                    <!-- Test Mode Info -->
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 
+                        <strong>Test Mode:</strong> This is a demo payment integration. 
+                        In production, use real Razorpay credentials.
+                    </div>
+
+                    <!-- Alternative: Direct Success (for testing without Razorpay) -->
+                    <div class="text-center mt-3">
+                        <button id="test-payment-button" class="btn btn-outline-success">
+                            <i class="fas fa-check-circle"></i> Test Payment (Skip Gateway)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cancel Button -->
+            <div class="text-center">
+                <a href="{% url 'payment_failed' %}" class="btn btn-outline-danger">
+                    <i class="fas fa-times"></i> Cancel Booking
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Razorpay Checkout Script -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+    // Razorpay Payment
+    document.getElementById('razorpay-button').onclick = function(e) {
+        e.preventDefault();
+        
+        var options = {
+            "key": "{{ razorpay_key }}", // Enter the Key ID from Razorpay Dashboard
+            "amount": "{{ total_amount|floatformat:0 }}" * 100, // Amount in paise
+            "currency": "{{ currency }}",
+            "name": "BookMySeat",
+            "description": "Movie Ticket Booking",
+            "image": "https://your-logo-url.com/logo.png",
+            "handler": function (response){
+                // Payment successful
+                processPayment(response.razorpay_payment_id, 'razorpay');
+            },
+            "prefill": {
+                "name": "{{ request.user.username }}",
+                "email": "{{ request.user.email }}",
+            },
+            "notes": {
+                "address": "Movie Booking"
+            },
+            "theme": {
+                "color": "#007bff"
+            },
+            "modal": {
+                "ondismiss": function(){
+                    alert('Payment cancelled. Your booking has not been confirmed.');
+                }
+            }
+        };
+        
+        var rzp1 = new Razorpay(options);
+        rzp1.on('payment.failed', function (response){
+            alert('Payment failed: ' + response.error.description);
+            window.location.href = "{% url 'payment_failed' %}";
+        });
+        
+        rzp1.open();
+    };
+
+    // Test Payment (bypasses Razorpay for testing)
+    document.getElementById('test-payment-button').onclick = function(e) {
+        e.preventDefault();
+        
+        if (confirm('This will simulate a successful payment. Continue?')) {
+            processPayment('test_payment_' + Date.now(), 'test');
+        }
+    };
+
+    // Process payment on server
+    function processPayment(paymentId, method) {
+        fetch("{% url 'process_payment' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                payment_id: paymentId,
+                payment_method: method
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                window.location.href = data.redirect_url;
+            } else {
+                alert('Error: ' + data.message);
+                window.location.href = "{% url 'payment_failed' %}";
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Payment processing failed. Please try again.');
+        });
+    }
+
+    // Countdown Timer
+    const expiryTimestamp = {{ reservation_expiry_timestamp }};
+    
+    function updateCountdown() {
+        const now = Date.now();
+        const timeLeft = expiryTimestamp - now;
+        
+        if (timeLeft <= 0) {
+            // Time expired - redirect to movie list
+            document.getElementById('countdown-timer').textContent = '0:00';
+            document.getElementById('timer-alert').classList.remove('alert-warning');
+            document.getElementById('timer-alert').classList.add('alert-danger');
+            document.getElementById('timer-alert').innerHTML = '<i class="fas fa-exclamation-triangle"></i> <strong>Time Expired!</strong> Redirecting...';
+            
+            // Disable payment buttons
+            document.querySelectorAll('button').forEach(btn => btn.disabled = true);
+            
+            // Redirect after 2 seconds
+            setTimeout(() => {
+                window.location.href = '/movies/';
+            }, 2000);
+            return;
+        }
+        
+        const minutes = Math.floor(timeLeft / 60000);
+        const seconds = Math.floor((timeLeft % 60000) / 1000);
+        
+        document.getElementById('countdown-timer').textContent = 
+            `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        
+        // Change color when less than 1 minute
+        if (timeLeft < 60000) {
+            document.getElementById('timer-alert').classList.remove('alert-warning');
+            document.getElementById('timer-alert').classList.add('alert-danger');
+        }
+    }
+    
+    // Update countdown every second
+    updateCountdown();
+    const countdownInterval = setInterval(updateCountdown, 1000);
+
+    // Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+
+<style>
+    .booking-item {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+    }
+    
+    .payment-method {
+        padding: 20px;
+        border: 2px solid #dee2e6;
+        border-radius: 8px;
+        transition: all 0.3s;
+    }
+    
+    .payment-method:hover {
+        border-color: #007bff;
+        background-color: #f8f9fa;
+    }
+    
+    .btn-block {
+        padding: 15px;
+        font-size: 18px;
+        font-weight: bold;
+    }
+</style>
+
+{% endblock %}

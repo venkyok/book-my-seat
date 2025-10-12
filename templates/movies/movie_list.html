@@ -5,23 +5,63 @@
     <h1 class="text-center mb-5">Movies</h1>
 
     <div class="row justify-content-center mb-5">
-        <div class="col-md-8">
+        <div class="col-md-10">
             <form method="GET" action="{% url 'movie_list' %}" class="search-bar">
-                <div class="input-group">
-                    <input
-                        class="form-control form-control-lg"
-                        name="search"
-                        placeholder="Search for Movies, Events, Plays, Sports and Activities"
-                        type="text"
-                        value="{{ request.GET.search|default_if_none:'' }}"
-                        aria-label="Search for movies"
-                    />
-                    <div class="input-group-append">
-                        <button class="btn btn-primary" type="submit">
-                            <i class="fas fa-search"></i> Search
-                        </button>
+                <div class="row">
+                    <!-- Search Bar -->
+                    <div class="col-md-6 mb-3">
+                        <div class="input-group">
+                            <input
+                                class="form-control form-control-lg"
+                                name="search"
+                                placeholder="Search for Movies..."
+                                type="text"
+                                value="{{ request.GET.search|default_if_none:'' }}"
+                                aria-label="Search for movies"
+                            />
+                            <div class="input-group-append">
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="fas fa-search"></i> Search
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Genre Filter -->
+                    <div class="col-md-3 mb-3">
+                        <select name="genre" class="form-control form-control-lg" onchange="this.form.submit()">
+                            <option value="">All Genres</option>
+                            {% for genre_code, genre_name in genres %}
+                                <option value="{{ genre_code }}" {% if selected_genre == genre_code %}selected{% endif %}>
+                                    {{ genre_name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Language Filter -->
+                    <div class="col-md-3 mb-3">
+                        <select name="language" class="form-control form-control-lg" onchange="this.form.submit()">
+                            <option value="">All Languages</option>
+                            {% for lang_code, lang_name in languages %}
+                                <option value="{{ lang_code }}" {% if selected_language == lang_code %}selected{% endif %}>
+                                    {{ lang_name }}
+                                </option>
+                            {% endfor %}
+                        </select>
                     </div>
                 </div>
+                
+                <!-- Clear Filters Button -->
+                {% if request.GET.genre or request.GET.language or request.GET.search %}
+                <div class="row">
+                    <div class="col-12 text-center">
+                        <a href="{% url 'movie_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Clear Filters
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
             </form>
         </div>
     </div>
@@ -37,21 +77,37 @@
                         <i class="fas fa-star text-warning"></i> {{ movie.rating }}
                     </p>
                     <p class="card-text">
+                        <span class="badge badge-primary">{{ movie.get_genre_display }}</span>
+                        <span class="badge badge-info">{{ movie.get_language_display }}</span>
+                    </p>
+                    {% if movie.trailer_url %}
+                    <p class="card-text">
+                        <span class="badge badge-danger">
+                            <i class="fas fa-play-circle"></i> Trailer Available
+                        </span>
+                    </p>
+                    {% endif %}
+                    <p class="card-text">
                         <small class="text-muted">
                             <i class="fas fa-users"></i> Cast: {{ movie.cast }}
                         </small>
                     </p>
                 </div>
                 <div class="card-footer bg-white border-top-0">
-                    <a href="{% url 'theater_list' movie.id %}" class="btn btn-outline-primary btn-block">
-                        View Theaters <i class="fas fa-chevron-right ml-2"></i>
-                    </a>
+                    <div class="btn-group w-100" role="group">
+                        <a href="{% url 'movie_detail' movie.id %}" class="btn btn-info" style="flex: 1;">
+                            <i class="fas fa-info-circle"></i> Details
+                        </a>
+                        <a href="{% url 'theater_list' movie.id %}" class="btn btn-primary" style="flex: 1;">
+                            <i class="fas fa-ticket-alt"></i> Book
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
         {% empty %}
         <div class="col-12 text-center">
-            <p class="lead">No movies found. Try a different search term.</p>
+            <p class="lead">No movies found. Try a different search term or filter.</p>
         </div>
         {% endfor %}
     </div>

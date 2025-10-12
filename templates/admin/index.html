@@ -1,0 +1,36 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+    .dashboard-link {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white !important;
+        padding: 10px 20px;
+        border-radius: 5px;
+        text-decoration: none;
+        display: inline-block;
+        margin: 10px 0;
+        font-weight: bold;
+        transition: transform 0.2s;
+    }
+    .dashboard-link:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        color: white !important;
+    }
+    .dashboard-link i {
+        margin-right: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 20px;">
+    <a href="/movies/admin-dashboard/" class="dashboard-link">
+        <i class="fas fa-chart-line"></i> View Analytics Dashboard
+    </a>
+</div>
+{{ block.super }}
+{% endblock %}

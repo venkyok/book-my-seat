@@ -1,0 +1,36 @@
+================================
+BOOKING CONFIRMATION
+================================
+
+Dear {{ user.username }},
+
+Thank you for booking with BookMySeat! Your booking has been confirmed.
+
+MOVIE DETAILS
+-------------
+Movie: {{ movie.name }}
+Genre: {{ movie.get_genre_display }}
+Language: {{ movie.get_language_display }}
+Rating: {{ movie.rating }}/10
+
+THEATER & SHOW DETAILS
+----------------------
+Theater: {{ theater.name }}
+Show Time: {{ theater.time|date:"F d, Y - h:i A" }}
+Number of Seats: {{ seat_count }}
+Booking Time: {{ booking_time|date:"F d, Y - h:i A" }}
+
+YOUR SEAT NUMBERS
+-----------------
+{% for seat in seats %}Seat {{ seat }}{% if not forloop.last %}, {% endif %}{% endfor %}
+
+IMPORTANT: Please arrive at the theater at least 15 minutes before the show time. 
+Carry a valid ID proof for verification.
+
+Enjoy your movie!
+
+---
+BookMySeat
+Your trusted movie booking partner
+
+This is an automated email. Please do not reply to this message.

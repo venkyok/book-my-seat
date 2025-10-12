@@ -130,6 +130,29 @@
       </div>
     </nav>
 
+    <!-- Django Messages -->
+    <div class="container mt-3">
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {% if message.tags == 'success' %}
+              <i class="fas fa-check-circle"></i>
+            {% elif message.tags == 'error' %}
+              <i class="fas fa-exclamation-circle"></i>
+            {% elif message.tags == 'warning' %}
+              <i class="fas fa-exclamation-triangle"></i>
+            {% elif message.tags == 'info' %}
+              <i class="fas fa-info-circle"></i>
+            {% endif %}
+            {{ message }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    </div>
+
     <div class="container">{% block content %} {% endblock %}</div>
     <footer class="footer mt-5">
       <div class="container">
