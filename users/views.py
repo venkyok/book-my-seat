@@ -4,11 +4,31 @@ from django.shortcuts import render,redirect
 from django.contrib.auth import login,authenticate
 from django.contrib.auth.decorators import login_required
 from movies.models import Movie , Booking
+from django.contrib import messages
+from django.conf import settings
+import os
+
+# Check if running in demo mode (Vercel)
+IS_DEMO_MODE = os.environ.get('VERCEL', False) or not os.access(settings.BASE_DIR, os.W_OK)
+
+# Import demo data
+if IS_DEMO_MODE:
+    from movies import demo_data
 
 def home(request):
-    movies= Movie.objects.all()
-    return render(request,'home.html',{'movies':movies})
+    if IS_DEMO_MODE:
+        movies = demo_data.get_demo_movies()
+    else:
+        movies = Movie.objects.all()
+    return render(request,'home.html',{'movies':movies, 'is_demo': IS_DEMO_MODE})
+
 def register(request):
+    if IS_DEMO_MODE:
+        # Demo mode - show message
+        messages.warning(request, '🎭 Demo Mode: Registration is disabled on Vercel (read-only database). This is a visual demonstration. To use the full app with user accounts and bookings, run it locally or deploy to Render.com!')
+        return redirect('movie-list')
+    
+    # Normal mode
     if request.method == 'POST':
         form=UserRegisterForm(request.POST)
         if form.is_valid():
@@ -23,6 +43,12 @@ def register(request):
     return render(request,'users/register.html',{'form':form})
 
 def login_view(request):
+    if IS_DEMO_MODE:
+        # Demo mode - show message
+        messages.warning(request, '🎭 Demo Mode: Login is disabled (no database writes). Browse movies and theaters to see the interface. For full functionality, run locally!')
+        return redirect('movie-list')
+    
+    # Normal mode
     if request.method == 'POST':
         form=AuthenticationForm(request,data=request.POST)
         if form.is_valid():
@@ -35,6 +61,10 @@ def login_view(request):
 
 @login_required
 def profile(request):
+    if IS_DEMO_MODE:
+        messages.info(request, '🎭 Demo Mode: Profile features are disabled.')
+        return redirect('movie-list')
+    
     bookings= Booking.objects.filter(user=request.user)
     if request.method == 'POST':
         u_form = UserUpdateForm(request.POST, instance=request.user)

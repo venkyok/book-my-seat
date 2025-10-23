@@ -2,6 +2,21 @@
 
 {% block content %}
 <div class="container py-5">
+    <!-- Demo Mode Banner -->
+    {% if is_demo %}
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <h4 class="alert-heading"><i class="fas fa-info-circle"></i> Demo Mode</h4>
+        <p class="mb-0">
+            🎭 This is a <strong>visual demonstration</strong> running on Vercel with read-only database. 
+            You can browse movies and theaters, but bookings and user registration are disabled. 
+            <strong>To use the full app</strong> with working bookings, payments, and user accounts, 
+            <a href="https://github.com/venkyok/book-my-seat" class="alert-link" target="_blank">run it locally</a> 
+            or deploy to <a href="https://render.com" class="alert-link" target="_blank">Render.com</a>!
+        </p>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+    
     <h1 class="text-center mb-5">Movies</h1>
 
     <div class="row justify-content-center mb-5">

@@ -1,5 +1,16 @@
 {% extends "users/basic.html" %} 
 {% block content %}
+<!-- Demo Mode Banner -->
+{% if is_demo %}
+<div class="container mt-3">
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        <strong><i class="fas fa-theater-masks"></i> Demo Mode:</strong> 
+        Viewing theaters for demonstration. Seat booking is disabled in demo mode.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+</div>
+{% endif %}
+
 <style>
     /* Styling */
     body {

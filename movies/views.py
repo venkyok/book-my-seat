@@ -10,30 +10,44 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 from datetime import datetime
 from django.utils import timezone
+import os
+
+# Import demo data for Vercel deployment
+from . import demo_data
+
+# Check if running on Vercel (read-only filesystem)
+IS_DEMO_MODE = os.environ.get('VERCEL', False) or not os.access(settings.BASE_DIR, os.W_OK)
 
 def movie_list(request):
-    movies = Movie.objects.all()
-    
     # Get filter parameters
     search_query = request.GET.get('search')
     genre_filter = request.GET.get('genre')
     language_filter = request.GET.get('language')
     
-    # Apply search filter
-    if search_query:
-        movies = movies.filter(name__icontains=search_query)
-    
-    # Apply genre filter
-    if genre_filter:
-        movies = movies.filter(genre=genre_filter)
-    
-    # Apply language filter
-    if language_filter:
-        movies = movies.filter(language=language_filter)
-    
-    # Get all unique genres and languages for filter dropdowns
-    genres = Movie.GENRE_CHOICES
-    languages = Movie.LANGUAGE_CHOICES
+    if IS_DEMO_MODE:
+        # Use demo data on Vercel
+        movies = demo_data.get_demo_movies(search_query, genre_filter, language_filter)
+        genres = demo_data.GENRE_CHOICES
+        languages = demo_data.LANGUAGE_CHOICES
+    else:
+        # Use database locally
+        movies = Movie.objects.all()
+        
+        # Apply search filter
+        if search_query:
+            movies = movies.filter(name__icontains=search_query)
+        
+        # Apply genre filter
+        if genre_filter:
+            movies = movies.filter(genre=genre_filter)
+        
+        # Apply language filter
+        if language_filter:
+            movies = movies.filter(language=language_filter)
+        
+        # Get all unique genres and languages for filter dropdowns
+        genres = Movie.GENRE_CHOICES
+        languages = Movie.LANGUAGE_CHOICES
     
     context = {
         'movies': movies,
@@ -41,6 +55,7 @@ def movie_list(request):
         'languages': languages,
         'selected_genre': genre_filter,
         'selected_language': language_filter,
+        'is_demo': IS_DEMO_MODE,
     }
     
     return render(request, 'movies/movie_list.html', context)
@@ -57,14 +72,34 @@ def movie_detail(request, movie_id):
     return render(request, 'movies/movie_detail.html', context)
 
 def theater_list(request,movie_id):
-    movie = get_object_or_404(Movie,id=movie_id)
-    theater=Theater.objects.filter(movie=movie)
-    return render(request,'movies/theater_list.html',{'movie':movie,'theaters':theater})
+    if IS_DEMO_MODE:
+        # Use demo data
+        movie = demo_data.get_demo_movie(movie_id)
+        if not movie:
+            messages.error(request, 'Movie not found')
+            return redirect('movie-list')
+        theater = demo_data.get_demo_theaters(movie_id)
+    else:
+        # Use database
+        movie = get_object_or_404(Movie,id=movie_id)
+        theater=Theater.objects.filter(movie=movie)
+    
+    return render(request,'movies/theater_list.html',{
+        'movie':movie,
+        'theaters':theater,
+        'is_demo': IS_DEMO_MODE
+    })
 
 
 
 @login_required(login_url='/login/')
 def book_seats(request, theater_id):
+    if IS_DEMO_MODE:
+        # Demo mode - show message and redirect
+        messages.warning(request, '🎭 Demo Mode: This is a visual demonstration. Booking functionality requires a database. To use the full app, run it locally!')
+        return redirect('movie-list')
+    
+    # Normal database mode
     theaters = get_object_or_404(Theater, id=theater_id)
     seats = Seat.objects.filter(theater=theaters)
     
